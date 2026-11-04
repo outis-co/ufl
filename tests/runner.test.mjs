@@ -1,9 +1,28 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, statSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, statSync, rmSync, symlinkSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { run } from "../skills/user-flow-library/scripts/ufl.mjs";
+
+test("the installed symlink entry point executes instead of silently exiting", () => {
+  const temp = mkdtempSync(join(tmpdir(), "ufl-skill-symlink-"));
+  try {
+    const entry = join(temp, "ufl.mjs");
+    symlinkSync(fileURLToPath(new URL("../skills/user-flow-library/scripts/ufl.mjs", import.meta.url)), entry);
+    const result = spawnSync(process.execPath, [entry, "status"], {
+      cwd: temp,
+      env: { ...process.env, UFL_AGENT_HOME: join(temp, "private") },
+      encoding: "utf8",
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /Run init first/);
+  } finally {
+    rmSync(temp, { recursive: true, force: true });
+  }
+});
 
 test("runs in arbitrary repos, resumes credentials, and never replays uncertain ingestion", async () => {
   const temp = mkdtempSync(join(tmpdir(), "ufl-skill-test-"));

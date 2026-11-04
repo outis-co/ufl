@@ -142,7 +142,7 @@ export async function run(command, input, {
   }
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && realpathSync(resolve(process.argv[1])) === fileURLToPath(import.meta.url)) {
   run(process.argv[2], process.argv[3])
     .then((result) => console.log(JSON.stringify(result, null, 2)))
     .catch((error) => {
