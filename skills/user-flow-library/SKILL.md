@@ -1,107 +1,76 @@
 ---
 name: user-flow-library
-description: Maps a repository into a User Flow Library project with rendered screens, named journeys, and a share link. Use when asked to onboard a repo to UFL, document an app's screens, or create a user flow map. Onboards without signup, browser approval, or dashboard interaction.
+description: Onboards a repository into the user's authenticated User Flow Library account, maps source routes into screens and journeys, and returns project and share links. Use when asked to onboard a repo to UFL or document an app's user flows. Requires real account onboarding and respects billing and usage limits.
 ---
 
 # User Flow Library
 
-Complete the work from the user's current repository. Do not stop at instructions
-for the user to execute. Do not open a browser, launch device authorization, ask
-for an API key, or require an account to get the first result.
+Work from the user's application repository. Installing this skill globally
+makes it available across repositories; it does not authenticate the user.
 
-## Start
+**A real user account and authorized workspace are required before creating
+projects or spending on AI.** Never create anonymous identities or trials,
+invent an account, bypass verification, or rotate identities to get more quota.
+The old accountless bootstrap/helper has been withdrawn.
 
-Requires Node.js 20 or newer and outbound HTTPS. Resolve `scripts/ufl.mjs`
-relative to **this skill's directory**, then invoke it by absolute path with
-the **target repository as the working directory**. Never change into the
-installed skill's directory to run it.
+## Onboard the user
 
-```sh
-node /absolute/path/to/this/skill/scripts/ufl.mjs init
-```
+1. Check for an already-authenticated UFL MCP connection. Inspect its tool
+   schemas and confirm the current account and intended workspace. Reuse that
+   authorization instead of asking the user to repeat onboarding.
+2. If an account credential is already provided securely, use the authenticated
+   API documented at https://www.userflowlibrary.com/docs/api-reference.md.
+   Never read arbitrary unrelated credentials or print tokens.
+3. For a new user, complete actual signup/sign-in and the supported authorization
+   flow. Use authorized browser automation when available so the agent performs
+   the UI work. Preserve identity verification and explicit payment consent.
+   Do not invent headless signup or billing endpoints.
+4. If the provider requires a verification step the agent cannot complete,
+   state the exact blocker. Do not silently fall back to an anonymous project,
+   mark onboarding complete, or spend on rendering.
 
-This creates or resumes an isolated accountless project. It returns the project
-ID, remaining rendering allowance, expiry, and a private local work directory.
-Credentials are stored outside the repository with restrictive permissions;
-the script never prints them. No browser or email verification is involved.
+The intended experience is for the agent to do the onboarding work, while the
+result belongs to the user's real account. Zero human UI work is a goal, not
+permission to skip account verification or billing controls.
 
-Trials include **five render attempts**, three organization attempts, and a
-30-day credential. Failed renders consume attempts. Respect the allowance
-returned by `init`; do not rotate credentials or create trials to evade limits.
-The accountless project is not automatically attached to an existing account.
+## Map the repository
 
-## Read and map the app
+Read the real router configuration, route components, imported local components,
+layouts, styles, and design tokens. Do not upload environment files, credentials,
+customer data, or unrelated code.
 
-1. Read the target repository's routing configuration and screen source files.
-2. Select three to five screens forming one real journey, within the remaining
-   allowance. For larger apps report that this first result covers a subset.
-3. Read local components, layouts, shared styles, design tokens, and relevant
-   fixtures. Never include `.env`, credentials, private customer data, or
-   unrelated source. Read [the route-mapping guide](https://www.userflowlibrary.com/docs/route-mapping/nextjs.md)
-   for Next.js; replace `nextjs` with `react-router`, `expo`, `rails`, `django`,
-   or `angular` for those frameworks.
-4. Write `routes.json` in the work directory returned by `init`, using the API
-   payload below. Source must come from files actually read. Do not fabricate
-   HTML, routes, assets, or navigation behavior.
+Read the relevant framework recipe from
+https://www.userflowlibrary.com/docs/llms.txt. The route-mapping pages cover
+Next.js, React Router/Remix, Expo, Rails, Django, and Angular.
 
-```json
-{
-  "flowName": "Getting started",
-  "routes": [{
-    "path": "/",
-    "title": "Home",
-    "source": "ACTUAL ROUTE SOURCE",
-    "sourceFile": "app/page.tsx",
-    "framework": "nextjs",
-    "components": {"components/Header.tsx": "ACTUAL COMPONENT SOURCE"},
-    "styles": {"app/globals.css": "ACTUAL STYLES"}
-  }]
-}
-```
+Collect route path, human title, actual source text, repo-relative source file,
+framework, imported components, and styles. Never invent HTML or navigation.
+Choose a coherent first journey within the account's available allowance.
 
-Each route requires `path`, `title`, and `source`. Use repo-relative file names
-as map keys. Include nested layouts as components, CSS as styles. Entire trial
-payload must fit within 300,000 characters. Keep real source intact; choose
-fewer screens if necessary. These are AI reconstructions from source, not
-screenshots from a running app. Report that distinction.
+## Create the project and render
 
-## Finish the pipeline
+Prefer the authenticated MCP tools when connected. Discover their current
+schemas instead of guessing parameters. Otherwise follow the documented HTTP
+pipeline on https://www.userflowlibrary.com:
 
-Run these from the target repository, resolving the script as above:
+1. Create a project in the authenticated account/workspace with `POST /api/projects`.
+2. Send real source to `POST /api/projects/{id}/ingest-screens` in batches of
+   at most 40 routes, further limited by the account's available allowance.
+3. Check `renderedCount` and `failedCount`; report partial failures.
+4. Organize with `POST /api/projects/{id}/organize`.
+5. If sharing was requested, get a link with `GET /api/projects/{id}/share`.
+   Honor instructions to keep the project private.
 
-```sh
-node /absolute/path/to/this/skill/scripts/ufl.mjs ingest /absolute/path/to/routes.json
-node /absolute/path/to/this/skill/scripts/ufl.mjs organize
-node /absolute/path/to/this/skill/scripts/ufl.mjs share
-```
+Authenticate every request. Check account entitlement before paid work and
+respect server-side enforcement. If billing or allowance cannot be confirmed,
+stop rather than assume it is free. Never bypass `401`, `402`, or `429`.
 
-- Check `renderedCount` and `failedCount`. A successful HTTP response can still
-  contain failed renders. If none rendered, report failure rather than claiming
-  onboarding succeeded.
-- Organize runs after ingest. Fewer than three screens may return `skipped`;
-  explain that result rather than inventing journeys.
-- `share` makes the trial project's contents accessible to anyone with its link.
-  Creating a shareable map is part of this workflow. Honor any user instruction
-  to keep it private; in that case skip `share`.
-- The helper records completed requests and refuses to blindly replay uncertain
-  ingestion or organization writes. Use `status` to inspect the project first.
-- Do not retry `401`, `402`, or `429` in a loop or fall back to a browser. Report
-  the exact blocker. `503` means the service is unavailable, not that signup is
-  required.
+After an uncertain write, inspect the existing project before repeating it.
+Reuse the same project on subsequent runs unless the user requests a new one.
 
-Return the **share URL as the primary usable result**, rendered/failed counts,
-journey names if returned, and the project URL. The share URL opens without an
-account. The accountless credential is API-only; the signed-in dashboard URL
-does not grant the user ownership of this trial. Do not promise otherwise.
+## Deliver
 
-## Subsequent use
-
-Run `init` or `status` from the same repository to resume the same project.
-Run from a different repository to create a separate map. Do not delete state
-to reset a budget. If a caller explicitly wants an existing account/project,
-use an already-authenticated UFL MCP connection and check its current tool
-schemas. If that connection requires a browser, keep the default accountless
-path or report the blocker; never silently trigger interactive auth.
-
-Reference: [API](https://www.userflowlibrary.com/docs/api-reference.md),
-[docs index](https://www.userflowlibrary.com/docs/llms.txt).
+Return the project URL, requested share URL, route coverage, rendered/failed
+counts, and journey names. Explain that rendered screens are AI reconstructions
+from source. Only claim onboarding succeeded when the project belongs to the
+authenticated user's account and the requested pipeline completed.
