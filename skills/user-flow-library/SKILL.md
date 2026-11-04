@@ -57,13 +57,20 @@ Prefer the authenticated MCP tools when connected. Discover their current
 schemas instead of guessing parameters. Otherwise follow the documented HTTP
 pipeline on https://www.userflowlibrary.com:
 
+Before ingesting into an existing project for a private run, call
+`revoke_project_share_link` and require success; it invalidates the previous
+public URL. If the tool is unavailable, use authenticated
+`DELETE /api/projects/{id}/share` or authorized browser controls and confirm
+revocation. If none succeeds, stop before ingesting private content. Merely
+omitting the sharing step does not revoke an old link.
+
 1. Create a project in the authenticated account/workspace with `POST /api/projects`.
 2. Send real source to `POST /api/projects/{id}/ingest-screens` in batches of
    at most 40 routes, further limited by the account's available allowance.
 3. Check `renderedCount` and `failedCount`; report partial failures.
 4. Organize with `POST /api/projects/{id}/organize`.
 5. If sharing was requested, get a link with `GET /api/projects/{id}/share`.
-   Honor instructions to keep the project private.
+   Skip this step for private runs.
 
 Authenticate every request. Check account entitlement before paid work and
 respect server-side enforcement. If billing or allowance cannot be confirmed,
