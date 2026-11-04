@@ -18,6 +18,10 @@ The old accountless bootstrap/helper has been withdrawn.
 1. Check for an already-authenticated UFL MCP connection. Inspect its tool
    schemas and confirm the current account and intended workspace. Reuse that
    authorization instead of asking the user to repeat onboarding.
+   Connect in the workspace that will own the subscription. If available, call
+   `get_account_usage` to confirm its `scope` and `upgradeAvailable`. A personal
+   account with no paid plan needs workspace onboarding before connecting MCP;
+   do not promise that a workspace payment upgrades a personal-scoped token.
 2. If an account credential is already provided securely, use the authenticated
    API documented at https://www.userflowlibrary.com/docs/api-reference.md.
    Never read arbitrary unrelated credentials or print tokens.
@@ -64,6 +68,42 @@ pipeline on https://www.userflowlibrary.com:
 Authenticate every request. Check account entitlement before paid work and
 respect server-side enforcement. If billing or allowance cannot be confirmed,
 stop rather than assume it is free. Never bypass `401`, `402`, or `429`.
+
+## At the 25-screen allowance: upgrade and continue
+
+The allowance belongs to the authenticated account/workspace across repositories.
+A new repository or project does not reset it.
+
+1. Call `get_account_usage` with `required_screens: 1` before ingesting. Make each
+   free batch no larger than `remainingCount` (and never larger than 40).
+2. Before a write, save the project ID, completed screen IDs, pending batch, and
+   remaining route list in a private checkpoint outside the source repository.
+   Do not put credentials in the checkpoint. Save successful responses as receipts.
+3. On `payment_required` / `AI_QUOTA_EXCEEDED`, show the exact returned `upgradeUrl`:
+   **"You've used your 25 free AI screens. Upgrade here: [link]. I'll continue
+   this project automatically once payment is confirmed."**
+   If the batch only exceeds the *remaining* free allowance, render a smaller
+   batch first; do not say all 25 were used when some remain.
+4. Keep the same connection, account/workspace, project, and pending batch.
+   Do not recreate them or make paid AI calls while waiting.
+5. While the agent session remains active, call `get_account_usage` with
+   `required_screens` equal to the pending batch size and `wait_seconds: 20`.
+   It polls verified server-side billing state. Repeat for up to ten minutes,
+   respecting service errors and rate-limit responses.
+6. When `readyToResume` is true, retry only the batch rejected with
+   `safeToRetry: true`; continue the remaining batches, organize, and share.
+   Do not ask the user to repeat the request or type "done."
+
+A checkout page opening, a redirect, or a user saying "paid" is not proof of an
+active subscription. Never mark payment complete yourself. If the agent session
+ends or polling times out, retain the checkpoint and resume from it on the next
+run. A disconnected MCP client cannot be woken by this skill.
+
+`BILLING_SETUP_REQUIRED` means no supported paid plan exists for that scope.
+Report the configuration issue instead of showing a misleading payment prompt.
+If `get_account_usage` is absent from the connected server's tool list, report
+that the MCP server needs the billing/resume update; do not fabricate the tool
+or claim automatic continuation is available.
 
 After an uncertain write, inspect the existing project before repeating it.
 Reuse the same project on subsequent runs unless the user requests a new one.

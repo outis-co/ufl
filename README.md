@@ -25,4 +25,20 @@ Projects must belong to the real user/workspace and remain subject to server-sid
 usage and billing controls. Credentials, environment files, and customer data
 must never be included in uploaded source.
 
+## Upgrade without restarting the task
+
+With a server exposing `get_account_usage`, the agent checks the account's
+shared 25-screen allowance before rendering. At the limit, it saves progress,
+shows the returned upgrade link, and waits for server-confirmed payment.
+It then continues the same project and pending batch without asking you to
+repeat your request.
+
+The checkout must upgrade the same billing scope as the MCP connection.
+Workspaces with a configured paid plan support this flow; an unconfigured
+personal billing scope is reported explicitly.
+
+Continuation is automatic while the agent session remains running. If it ends,
+the checkpoint supports resuming on the next run. The skill cannot wake a closed
+agent, and it never treats a checkout redirect as proof of payment.
+
 Documentation: https://www.userflowlibrary.com/docs
