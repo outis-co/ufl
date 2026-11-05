@@ -51,6 +51,30 @@ Collect route path, human title, actual source text, repo-relative source file,
 framework, imported components, and styles. Never invent HTML or navigation.
 Choose a coherent first journey within the account's available allowance.
 
+Inventory interaction states as well as URLs before choosing that first batch.
+Trace primary buttons and submit handlers into local state setters, providers,
+and the dialog, drawer, tab, or conditional component they control. A route's
+default view does not document its task-creation form or invitation dialog.
+Record the trigger, state key, owning route, relevant source files, and the
+observable result. Distinguish a demo toast or local form reset from a real
+backend operation; do not invent a successful creation or invitation.
+
+When the current ingestion schema exposes `variant`, use a separate entry with
+the same real route path and a stable `stateKey`, the supported state `kind`,
+and a source-grounded `renderInstruction`. When supported and known, preserve
+`evidence` with repo-relative `file`, one-based `line`, `expression`, and
+`candidate_key`; these are source references, not observed interactions.
+Include the actual state component
+and its imported dependencies. Do not invent a URL for a local UI state or
+manufacture screenshot evidence. If MCP lacks this field, use the documented
+authenticated HTTP API or report the capability gap.
+
+Each requested state is another screen against the same account allowance.
+Prioritize complete primary journeys, including their interaction states,
+before alternate URL aliases and secondary error-page catalogs. Preserve both
+the route and state key in the checkpoint so a default screen is not mistaken
+for a completed dialog capture.
+
 When the current ingestion schema exposes `navigation`, include source-verified
 internal destinations as `{ to, label }` entries for each route. Read form-submit
 handlers and imported constants as well as links. For example, a verified
@@ -98,7 +122,7 @@ A new repository or project does not reset it.
 1. Call `get_account_usage` with `required_screens: 1` before ingesting. Make each
    free batch no larger than `remainingCount` (and never larger than 40).
 2. Before a write, save the project ID, completed screen IDs, pending batch, and
-   remaining route list in a private checkpoint outside the source repository.
+   remaining route/state list in a private checkpoint outside the source repository.
    Do not put credentials in the checkpoint. Save successful responses as receipts.
 3. On `payment_required` / `AI_QUOTA_EXCEEDED`, show the exact returned `upgradeUrl`:
    **"You've used your 25 free AI screens. Upgrade here: [link]. I'll continue
@@ -132,6 +156,10 @@ Reuse the same project on subsequent runs unless the user requests a new one.
 ## Deliver
 
 Return the project URL, requested share URL, route coverage, rendered/failed
-counts, and journey names. Explain that rendered screens are AI reconstructions
+counts, captured/pending interaction states, and journey names. Check that each
+journey represents one goal; a shared sidebar or settings layout does not make
+unrelated tasks one journey. A single captured screen can represent a distinct
+goal. Flag missing or unsupported transitions rather than padding a journey.
+Explain that rendered screens are AI reconstructions
 from source. Only claim onboarding succeeded when the project belongs to the
 authenticated user's account and the requested pipeline completed.
