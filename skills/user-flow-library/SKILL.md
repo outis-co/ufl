@@ -61,7 +61,10 @@ backend operation; do not invent a successful creation or invitation.
 
 When the current ingestion schema exposes `variant`, use a separate entry with
 the same real route path and a stable `stateKey`, the supported state `kind`,
-and a source-grounded `renderInstruction`. Include the actual state component
+and a source-grounded `renderInstruction`. When supported and known, preserve
+`evidence` with repo-relative `file`, one-based `line`, `expression`, and
+`candidate_key`; these are source references, not observed interactions.
+Include the actual state component
 and its imported dependencies. Do not invent a URL for a local UI state or
 manufacture screenshot evidence. If MCP lacks this field, use the documented
 authenticated HTTP API or report the capability gap.
