@@ -45,11 +45,23 @@ customer data, or unrelated code.
 
 Read the relevant framework recipe from
 https://www.userflowlibrary.com/docs/llms.txt. The route-mapping pages cover
-Next.js, React Router/Remix, Expo, Rails, Django, and Angular.
+Next.js, React Router/Remix/TanStack Router, Expo, Rails, Django, and Angular.
 
 Collect route path, human title, actual source text, repo-relative source file,
 framework, imported components, and styles. Never invent HTML or navigation.
 Choose a coherent first journey within the account's available allowance.
+
+When the current ingestion schema exposes `navigation`, include source-verified
+internal destinations as `{ to, label }` entries for each route. Read form-submit
+handlers and imported constants as well as links. For example, a verified
+`redirectTo || '/'` fallback supports `/`; it does not establish the unknown
+runtime redirect. Omit unknown destinations instead of guessing. Save this
+metadata with the pending route payload so links can resolve across batches.
+
+For TanStack Router, use the actual route tree to distinguish route IDs from
+URLs. Route groups and pathless layouts do not become URL segments. Include only
+the layouts that wrap the route. Resolve dynamic values from committed fixtures
+or explicit enums, and report unresolved routes.
 
 ## Create the project and render
 
@@ -67,7 +79,9 @@ omitting the sharing step does not revoke an old link.
 1. Create a project in the authenticated account/workspace with `POST /api/projects`.
 2. Send real source to `POST /api/projects/{id}/ingest-screens` in batches of
    at most 40 routes, further limited by the account's available allowance.
-3. Check `renderedCount` and `failedCount`; report partial failures.
+3. Check `renderedCount`, `failedCount`, and any `navigationWarning`; report partial
+   failures. Inspect representative gallery screens against the running source
+   app when possible. Successful storage alone is not proof of visual fidelity.
 4. Organize with `POST /api/projects/{id}/organize`.
 5. If sharing was requested, get a link with `GET /api/projects/{id}/share`.
    Skip this step for private runs.
