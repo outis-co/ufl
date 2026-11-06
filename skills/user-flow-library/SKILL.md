@@ -1,6 +1,6 @@
 ---
 name: user-flow-library
-description: Onboards a repository into the user's authenticated User Flow Library account, maps source routes into screens and journeys, and returns project and share links. Use when asked to onboard a repo to UFL or document an app's user flows. Requires real account onboarding and respects billing and usage limits.
+description: Map your app into a Mobbin-style screen library and user journeys with Claude Code or a compatible coding agent. Use when asked to map an app, document its screens and user flows, turn a codebase into a browsable app atlas, or onboard a repository to User Flow Library. Reads routes, components, styles, and interaction states; produces AI reconstructions with explicit coverage. Requires the user's real UFL account and respects its shared rendering allowance.
 ---
 
 # User Flow Library
@@ -8,12 +8,30 @@ description: Onboards a repository into the user's authenticated User Flow Libra
 Work from the user's application repository. Installing this skill globally
 makes it available across repositories; it does not authenticate the user.
 
+Use this for requests such as “turn my app into a Mobbin-like library” or
+“document this app's screens and user journeys.” The output is a UFL project
+with AI-reconstructed screens, source references, and goal-based journeys.
+Do not promise exhaustive runtime recordings or complete coverage of unknown states.
+
 **A real user account and authorized workspace are required before creating
 projects or spending on AI.** Never create anonymous identities or trials,
 invent an account, bypass verification, or rotate identities to get more quota.
 The old accountless bootstrap/helper has been withdrawn.
 
 ## Onboard the user
+
+If no UFL connection is configured in Claude Code, register the hosted server
+at user scope so the same connection is available across repositories:
+
+```sh
+claude mcp add --scope user --transport http user-flow-library https://mcp.userflowlibrary.com/mcp
+```
+
+Use the client's supported MCP authentication flow (`/mcp` in Claude Code).
+Inspect an existing connection before changing it: project-specific settings
+may override user settings, and a connection can belong to a different workspace.
+For other clients, follow https://www.userflowlibrary.com/docs/mcp-server.md.
+Do not claim authentication succeeded merely because a config entry was saved.
 
 1. Check for an already-authenticated UFL MCP connection. Inspect its tool
    schemas and confirm the current account and intended workspace. Reuse that
